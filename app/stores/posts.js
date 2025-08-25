@@ -1,4 +1,3 @@
-// stores/posts.js
 import { defineStore } from 'pinia'
 
 export const usePostsStore = defineStore('posts', {
@@ -8,7 +7,7 @@ export const usePostsStore = defineStore('posts', {
     loading: false,
     error: null,
     lastFetched: null,
-    cacheTimeout: 15 * 60 * 1000 // 15 minutes in milliseconds
+    cacheTimeout: 15 * 60 * 1000 
   }),
 
   getters: {
@@ -25,7 +24,6 @@ export const usePostsStore = defineStore('posts', {
 
   actions: {
     async fetchPosts(forceRefresh = false) {
-      // Check cache validity
       if (!forceRefresh && !this.isDataStale && this.posts.length > 0) {
         console.log('Returning cached posts')
         return this.posts
@@ -35,7 +33,6 @@ export const usePostsStore = defineStore('posts', {
       this.error = null
 
       try {
-        // Simple fetch without destructuring
         const response = await fetch('https://dummyjson.com/posts?limit=30&select=id,title,body,userId,tags,reactions')
         
         if (!response.ok) {
@@ -45,12 +42,10 @@ export const usePostsStore = defineStore('posts', {
         const data = await response.json()
         console.log('Fetched data:', data)
 
-        // Check if data has posts property
         if (data && data.posts && Array.isArray(data.posts)) {
           this.posts = data.posts
           this.lastFetched = Date.now()
           
-          // Store in sessionStorage for persistence
           if (typeof window !== 'undefined') {
             try {
               sessionStorage.setItem('posts_cache', JSON.stringify({
@@ -70,7 +65,6 @@ export const usePostsStore = defineStore('posts', {
         console.error('Error fetching posts:', err)
         this.error = err.message || 'Failed to fetch posts'
         
-        // Try to load from cache if available
         if (typeof window !== 'undefined') {
           try {
             const cached = sessionStorage.getItem('posts_cache')
@@ -79,7 +73,7 @@ export const usePostsStore = defineStore('posts', {
               if (posts && Array.isArray(posts)) {
                 this.posts = posts
                 this.lastFetched = timestamp
-                this.error = null // Clear error if cache load successful
+                this.error = null 
                 return this.posts
               }
             }
@@ -88,7 +82,6 @@ export const usePostsStore = defineStore('posts', {
           }
         }
         
-        // Keep posts array empty if all fails
         this.posts = []
         throw err
       } finally {
@@ -97,7 +90,6 @@ export const usePostsStore = defineStore('posts', {
     },
 
     async fetchPostById(id) {
-      // First check if post exists in cache
       const cachedPost = this.getPostById(id)
       if (cachedPost && !this.isDataStale) {
         this.currentPost = cachedPost
@@ -117,7 +109,6 @@ export const usePostsStore = defineStore('posts', {
         const post = await response.json()
         this.currentPost = post
         
-        // Update post in posts array if it exists
         const index = this.posts.findIndex(p => p.id === parseInt(id))
         if (index !== -1) {
           this.posts[index] = post
